@@ -224,18 +224,15 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
                     self.present(aController, animated: true)
                 }
             } else {
-                let zoneID: CKRecordZoneID? = self.synchronizer?.modelAdapters().first?.recordZoneID()
-                if zoneID != nil {
-                    self.synchronizer?.subscribeForChanges(in: zoneID!) { error in
+                    self.synchronizer?.subscribeForDatabaseChanges() { error in
                         if error != nil {
                             if let anError = error {
                                 print("Failed to subscribe with error: \(anError)")
                             }
                         } else {
-                            print("Subscribed for notifications")
+                            print("Private subscribtions checked")
                         }
-                    }
-                }
+                    }                
             }
             if (completion != nil) {
                 completion!(error)

@@ -24,7 +24,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        subscribeChanges()
+        synchronizer = CoreDataStack.shared.sharedSynchronizer
         self.setupFetchedResultsController()
     
     }
@@ -46,7 +46,6 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
             fetchedResultsController = synchronizer?.multiFetchedResultsController(with: fetchRequest)
             fetchedResultsController?.delegate = self
-            print(fetchedResultsController)
         }
     }
     
@@ -110,7 +109,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let company = object(at: indexPath) as? QSCompany
+        let company = object(at: indexPath)
         performSegue(withIdentifier: "showEmployees", sender: company)
     }
     
@@ -165,73 +164,39 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     
 // MARK: - Actions
     
-//    func subscribe() {
-//
-//        let artistRecordID = CKRecordID(recordName: "Mei Chen")
-//        let predicate = NSPredicate(format: "artist = %@", artistRecordID)
-//
-//        let subscription = CKSubscription(recordType: "Artwork", predicate: predicate, options: .firesOnRecordCreation)
-//        let DB = CKContainer.default()
-//
-//        let CKSubscription = CKRecordZoneSubscription(zoneID: artistRecordID.zoneID)
-//        var notificationInfo = CKNotificationInfo()
-//        notificationInfo.alertLocalizationKey = "New artwork by your favorite artist."
-//        notificationInfo.shouldBadge = true
-//
-//
-//        subscription.notificationInfo = notificationInfo
-//
-//
-//        var publicDatabase: CKDatabase? = CKContainer.default().publicCloudDatabase
-//        publicDatabase?.save(subscription, completionHandler: { (subsription, error) in
-//            print(error)
-//        })
-//
-//    }
-    
-    func subscribeChanges() {
-        let container = CKContainer.default()
-        let subscription = CKDatabaseSubscription(subscriptionID: "test")
-        let notificationInfo = CKNotificationInfo()
-        notificationInfo.shouldSendContentAvailable = true
-        subscription.notificationInfo = notificationInfo
-        
-        let operation = CKModifySubscriptionsOperation(subscriptionsToSave: [subscription], subscriptionIDsToDelete: [])
-        operation.modifySubscriptionsCompletionBlock = { savedSubscriptions, deletedSubscriptionIDs, operationError in
-            if operationError != nil {
-                print(operationError)
-                return
-            } else {
-                print("Subscribed")
-            }
-        }
-        
-//        container.privateCloudDatabase.add(operation)
-        container.sharedCloudDatabase.add(operation)
-    }
-    
     @IBAction func didTapSynchronize(_ sender: Any) {
         synchronize(withCompletion: { _ in })
     }
     
     func synchronize(withCompletion completion: ((_ error: Error?) -> Void)? = nil) {
         self.showLoading(true)
-        synchronizer?.synchronize(completion: { error in
+        self.synchronizer?.synchronize(completion: { error in
             self.showLoading(false)
             if error != nil {
                 var alertController: UIAlertController? = nil
                 if let anError = error {
-                    alertController = UIAlertController(title: "Error", message: "Error: \(anError)", preferredStyle: .alert)
+                    print("Sync Error : \(anError)")
+                    alertController = UIAlertController(title: "Sync Error", message: "Error: \(anError)", preferredStyle: .alert)
                 }
                 alertController?.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
                 if let aController = alertController {
                     self.present(aController, animated: true)
                 }
+            } else {
+                self.synchronizer?.subscribeForDatabaseChanges() { error in
+                    if error != nil {
+                        if let anError = error {
+                            print("Failed to subscribe with error: \(anError)")
+                        }
+                    } else {
+                        print("Shared subscribtion checked")
+                    }
+                }
             }
-            
             if (completion != nil) {
                 completion!(error)
             }
+            
         })
     }
     

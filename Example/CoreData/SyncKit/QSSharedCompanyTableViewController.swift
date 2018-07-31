@@ -183,15 +183,15 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                     self.present(aController, animated: true)
                 }
             } else {
-                self.synchronizer?.subscribeForDatabaseChanges() { error in
-                    if error != nil {
-                        if let anError = error {
-                            print("Failed to subscribe with error: \(anError)")
-                        }
-                    } else {
-                        print("Shared subscribtion checked")
-                    }
-                }
+//                self.synchronizer?.subscribeForDatabaseChanges() { error in
+//                    if error != nil {
+//                        if let anError = error {
+//                            print("Failed to subscribe with error: \(anError)")
+//                        }
+//                    } else {
+//                        print("Shared subscribtion checked")
+//                    }
+//                }
             }
             if (completion != nil) {
                 completion!(error)

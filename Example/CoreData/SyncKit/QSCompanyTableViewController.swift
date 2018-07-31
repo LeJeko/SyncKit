@@ -224,15 +224,15 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
                     self.present(aController, animated: true)
                 }
             } else {
-                    self.synchronizer?.subscribeForDatabaseChanges() { error in
-                        if error != nil {
-                            if let anError = error {
-                                print("Failed to subscribe with error: \(anError)")
-                            }
-                        } else {
-                            print("Private subscribtions checked")
-                        }
-                    }                
+//                    self.synchronizer?.subscribeForDatabaseChanges() { error in
+//                        if error != nil {
+//                            if let anError = error {
+//                                print("Failed to subscribe with error: \(anError)")
+//                            }
+//                        } else {
+//                            print("Private subscribtions checked")
+//                        }
+//                    }                
             }
             if (completion != nil) {
                 completion!(error)

@@ -8,17 +8,24 @@
 
 import SyncKit
 import UIKit
+import UserNotifications
 
 @UIApplicationMain
 class QSAppDelegate: UIResponder, UIApplicationDelegate {
     
     var window: UIWindow?
     
-    
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions:  [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
         
         CoreDataStack.shared.setupSynchronizer()
         CoreDataStack.shared.setupSharedSynchronizer()
+        
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            
+        }
+        
+        CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
+        CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
         
         // Override point for customization after application launch.
         let tabBarController = window?.rootViewController as? UITabBarController
@@ -39,12 +46,27 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
             settingsVC?.privateSynchronizer = CoreDataStack.shared.synchronizer
             settingsVC?.sharedSynchronizer = CoreDataStack.shared.sharedSynchronizer
         }
-        UIApplication.shared.registerUserNotificationSettings(UIUserNotificationSettings(types: [.sound, .alert, .badge], categories: nil))
-        UIApplication.shared.registerForRemoteNotifications()
-        // Handle APN on Terminated state, app launched because of APN
-        let payload = launchOptions?[.remoteNotification] as? [AnyHashable : Any]
-        if payload != nil {
-            print(payload!)
+        
+        if #available(iOS 10.0, *) {
+            //iOS 10.0 and greater
+            UNUserNotificationCenter.current().delegate = self as? UNUserNotificationCenterDelegate
+            UNUserNotificationCenter.current().requestAuthorization(options: [.badge, .sound, .alert], completionHandler: { granted, error in
+                DispatchQueue.main.async {
+                    if granted {
+                        UIApplication.shared.registerForRemoteNotifications()
+                    }
+                    else {
+                        //Do stuff if unsuccessful...
+                    }
+                }
+            })
+        }
+        else {
+            //iOS 9
+            let type: UIUserNotificationType = [UIUserNotificationType.badge, UIUserNotificationType.alert, UIUserNotificationType.sound]
+            let setting = UIUserNotificationSettings(types: type, categories: nil)
+            UIApplication.shared.registerUserNotificationSettings(setting)
+            UIApplication.shared.registerForRemoteNotifications()
         }
         
         return true
@@ -87,11 +109,7 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
 
     
     func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any]) {
-        let cloudKitNotification = CKNotification(fromRemoteNotificationDictionary: userInfo)
-        let alertBody = cloudKitNotification.alertBody
-        if cloudKitNotification.notificationType == .query {
-            let recordID: CKRecordID? = (cloudKitNotification as? CKQueryNotification)?.recordID
-        }
+        print("Remote Notification received")
         // Detect if APN is received on Background or Foreground state
         if application.applicationState == .inactive {
             print("Application is inactive")

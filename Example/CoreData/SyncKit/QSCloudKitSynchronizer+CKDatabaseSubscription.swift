@@ -31,8 +31,6 @@ import SyncKit
             subscriptionID = "shared-changes"
         }
         
-        print("subsciptionID = \(subscriptionID)")
-        
         database.fetchAllSubscriptions { (subscriptions, error) in
             guard error == nil else {
                 completion?(error)

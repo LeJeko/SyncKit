@@ -90,13 +90,31 @@ class CoreDataStack: NSObject {
     public var synchronizer: QSCloudKitSynchronizer?
     
     func setupSynchronizer() {
-        self.synchronizer = QSCloudKitSynchronizer.cloudKitPrivateSynchronizer(withContainerName: "iCloud.ch.jeko.SyncKit", managedObjectContext: self.persistentContainer.viewContext)
+        self.synchronizer = QSCloudKitSynchronizer.cloudKitPrivateSynchronizer(withContainerName: cloudKitContainerID, managedObjectContext: self.persistentContainer.viewContext)
+        self.synchronizer?.subscribeForDatabaseChanges() { error in
+            if error != nil {
+                if let anError = error {
+                    print("Failed to subscribe to private CKdatabase with error: \(anError)")
+                }
+            } else {
+                print("Private CKdatabase subscribtions checked")
+            }
+        }
     }
     
     public var sharedSynchronizer: QSCloudKitSynchronizer?
     
     func setupSharedSynchronizer() {
         self.sharedSynchronizer = QSCloudKitSynchronizer.cloudKitSharedSynchronizer(withContainerName: cloudKitContainerID, objectModel: self.persistentContainer.managedObjectModel)
+        self.sharedSynchronizer?.subscribeForDatabaseChanges() { error in
+            if error != nil {
+                if let anError = error {
+                    print("Failed to subscribe to shared CKdatabase with error: \(anError)")
+                }
+            } else {
+                print("Shared CKdatabase subscribtions checked")
+            }
+        }
     }
     
     func saveContext () {

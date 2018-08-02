@@ -8,6 +8,7 @@
 
 import SyncKit
 import NotificationCenter
+import UserNotifications
 import CloudKit
 
 
@@ -87,7 +88,7 @@ class CoreDataStack: NSObject {
     
     // MARK: Sync
     
-    public var synchronizer: QSCloudKitSynchronizer?
+    var synchronizer: QSCloudKitSynchronizer?
     
     func setupSynchronizer() {
         self.synchronizer = QSCloudKitSynchronizer.cloudKitPrivateSynchronizer(withContainerName: cloudKitContainerID, managedObjectContext: self.persistentContainer.viewContext)
@@ -102,7 +103,7 @@ class CoreDataStack: NSObject {
         }
     }
     
-    public var sharedSynchronizer: QSCloudKitSynchronizer?
+    var sharedSynchronizer: QSCloudKitSynchronizer?
     
     func setupSharedSynchronizer() {
         self.sharedSynchronizer = QSCloudKitSynchronizer.cloudKitSharedSynchronizer(withContainerName: cloudKitContainerID, objectModel: self.persistentContainer.managedObjectModel)
@@ -147,7 +148,6 @@ class CoreDataStack: NSObject {
             }
         }
     }
-    
     
 }
 

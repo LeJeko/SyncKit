@@ -119,6 +119,7 @@
 		6CA1AC6E210D05D80058F7F2 /* QSCompanyTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QSCompanyTableViewCell.swift; sourceTree = "<group>"; };
 		6CA1AC6F210D05D80058F7F2 /* QSSettingsTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QSSettingsTableViewController.swift; sourceTree = "<group>"; };
 		6CA1AC70210D05D80058F7F2 /* QSEmployeeTableViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QSEmployeeTableViewController.swift; sourceTree = "<group>"; };
+		6CA3375A2111E803008CD7B7 /* QSExample 2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "QSExample 2.xcdatamodel"; sourceTree = "<group>"; };
 		6CCE3A61210DFEC800DA6950 /* QSAppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QSAppDelegate.swift; sourceTree = "<group>"; };
 		6CCE3A63210E5BC900DA6950 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
 		7CFCC3E7A2C4B902AC907709 /* Pods-SyncKit_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SyncKit_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-SyncKit_Tests/Pods-SyncKit_Tests.release.xcconfig"; sourceTree = "<group>"; };
@@ -813,6 +814,7 @@
 		64E92B2720A7622F00AABA19 /* QSExample.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				6CA3375A2111E803008CD7B7 /* QSExample 2.xcdatamodel */,
 				64E92B2820A7622F00AABA19 /* QSExample.xcdatamodel */,
 			);
 			currentVersion = 64E92B2820A7622F00AABA19 /* QSExample.xcdatamodel */;

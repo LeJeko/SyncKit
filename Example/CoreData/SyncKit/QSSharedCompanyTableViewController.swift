@@ -32,6 +32,16 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         self.tableView.reloadData()
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            syncButton.setTitle("Auto Sync", for: .disabled)
+            syncButton.isEnabled = false
+            syncButton.isHidden = false
+        } else {
+            syncButton.setTitle("Synchronize", for: .normal)
+            syncButton.isEnabled = true
+            syncButton.isHidden = false
+        }
+
     }
     
     override func didReceiveMemoryWarning() {
@@ -61,6 +71,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
             if let aContext = employeeTableViewController.company?.managedObjectContext {
                 employeeTableViewController.managedObjectContext = aContext
             }
+            employeeTableViewController.synchronizer = self.synchronizer
             let share: CKShare? = synchronizer?.share(for: company!)
             employeeTableViewController.canWrite = share?.currentUserParticipant?.permission == .readWrite
         }
@@ -182,17 +193,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                 if let aController = alertController {
                     self.present(aController, animated: true)
                 }
-            } else {
-//                self.synchronizer?.subscribeForDatabaseChanges() { error in
-//                    if error != nil {
-//                        if let anError = error {
-//                            print("Failed to subscribe with error: \(anError)")
-//                        }
-//                    } else {
-//                        print("Shared subscribtion checked")
-//                    }
-//                }
-            }
+            } 
             if (completion != nil) {
                 completion!(error)
             }
@@ -212,6 +213,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                 if share != nil {
                     if let aShare = share {
                         sharingController = UICloudSharingController(share: aShare, container: container)
+                        sharingController?.availablePermissions = [.allowPrivate, .allowReadOnly, .allowReadWrite]
                     }
                 } else {
                     sharingController = UICloudSharingController(preparationHandler: { controller, preparationCompletionHandler in
@@ -219,8 +221,8 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                             preparationCompletionHandler(share, container, error)
                         }
                     })
+                    sharingController?.availablePermissions = [.allowPrivate, .allowReadOnly]
                 }
-                sharingController?.availablePermissions = [.allowPublic, .allowReadOnly, .allowReadWrite]
                 sharingController?.delegate = self
                 if let aController = sharingController {
                     self.present(aController, animated: true)

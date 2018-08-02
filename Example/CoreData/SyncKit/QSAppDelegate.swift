@@ -21,9 +21,15 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         CoreDataStack.shared.setupSharedSynchronizer()
         
         if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
-            
+            checkPushNotification { (isEnable) in
+                if isEnable {
+                    
+                }
+                print("check notification finished")
+            }
         }
         
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last)
         CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
         CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
         
@@ -116,9 +122,10 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         } else if application.applicationState == .active {
             print("Application is active")
         }
-        CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
-        CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
-        print("Remote Notification received")
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
+            CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
+        }
     }
 
     
@@ -139,4 +146,71 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         container.add(acceptShareOperation)
     }
     
+    //MARK: - Check Notifications
+    
+    func checkPushNotification(checkNotificationStatus isEnable : ((Bool)->())? = nil){
+        if #available(iOS 10.0, *) {
+            UNUserNotificationCenter.current().getNotificationSettings(){ (setttings) in
+                
+                switch setttings.authorizationStatus{
+                case .authorized:
+                    // User has given authorization.
+                    print("enabled notification setting")
+                    isEnable?(true)
+                case .denied:
+                    // User has denied authorization.
+                    // You could tell them to change this in Settings
+                    print("setting has been disabled")
+                    isEnable?(false)
+                case .notDetermined:
+                    // Authorization request has not been made yet
+                    print("something vital went wrong here")
+                    isEnable?(false)
+                }
+            }
+        } else {
+            // iOS 9 support
+            let isNotificationEnabled = UIApplication.shared.currentUserNotificationSettings?.types.contains(UIUserNotificationType.alert)
+            if isNotificationEnabled == true{
+                
+                print("enabled notification setting")
+                isEnable?(true)
+                
+            }else{
+                
+                print("setting has been disabled")
+                isEnable?(false)
+            }
+        }
+    }
+
+    func requestNotificationAuthorization() -> Bool {
+        if #available(iOS 10, *)
+        { // iOS 10 support
+            //create the notificationCenter
+            let center = UNUserNotificationCenter.current()
+            center.delegate = UIApplication.shared.delegate as? UNUserNotificationCenterDelegate
+            // set the type as sound or badge
+            var result = false
+            center.requestAuthorization(options: [.sound,.alert,.badge]) { (granted, error) in
+                if granted {
+                    print("Notification Enable Successfully")
+                    result = true
+                }else{
+                    print("Some Error Occure")
+                    result = false
+                }
+            }
+            UIApplication.shared.registerForRemoteNotifications()
+            return result
+        }
+        else
+        {
+            // iOS 9 support
+            UIApplication.shared.registerUserNotificationSettings(UIUserNotificationSettings(types: [.badge, .sound, .alert], categories: nil))
+            UIApplication.shared.registerForRemoteNotifications()
+            return true
+        }
+        
+    }
 }

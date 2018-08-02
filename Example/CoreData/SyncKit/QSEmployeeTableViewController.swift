@@ -8,11 +8,12 @@
 
 import UIKit
 import CoreData
-import UIKit
+import SyncKit
 
 class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     var managedObjectContext: NSManagedObjectContext?
     var company: QSCompany?
+    var synchronizer: QSCloudKitSynchronizer?
     var canWrite = false
     
     private var fetchedResultsController: NSFetchedResultsController<NSFetchRequestResult>?
@@ -51,6 +52,7 @@ class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsCont
         } catch {
             print(error)
         }
+        autoSync()
     }
 
 //pragma mark - NSFetchedResultsControllerDelegate
@@ -149,6 +151,7 @@ class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsCont
                 managedObjectContext?.delete(anEmployee)
             }
             try? managedObjectContext?.save()
+            autoSync()
         }
     }
     
@@ -167,12 +170,14 @@ class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsCont
             employee?.photo = nil
             self.managedObjectContext?.perform({
                 try? self.managedObjectContext?.save()
+                self.autoSync()
             })
         }))
         alertController.addAction(UIAlertAction(title: "Clear name", style: .default, handler: { action in
             employee?.name = nil
             self.managedObjectContext?.perform({
                 try? self.managedObjectContext?.save()
+                self.autoSync()
             })
         }))
         alertController.addTextField(configurationHandler: { textField in
@@ -182,6 +187,7 @@ class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsCont
             employee?.name = alertController.textFields?.first?.text
             self.managedObjectContext?.perform({
                 try? self.managedObjectContext?.save()
+                self.autoSync()
             })
         }))
         alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
@@ -203,6 +209,7 @@ class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsCont
         editingEmployee?.photo = UIImagePNGRepresentation(resizedImage!) as NSData?
         managedObjectContext?.perform({
             try? self.managedObjectContext?.save()
+            self.autoSync()
         })
         dismiss(animated: true)
     }
@@ -236,8 +243,52 @@ class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsCont
         }))
         present(alertController, animated: true)
     }
-
     
+    // MARK: - AutoSync
+    
+    func autoSync() {
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            self.showLoading(true)
+            self.synchronizer?.synchronize(completion: { (error) in
+                self.showLoading(false)
+                if error != nil {
+                    self.alertError(error: error)
+                }
+            })
+            
+        }
+    }
+
+    // MARK: - Error Alert
+    
+    func alertError(error: Error?) {
+        var alertController: UIAlertController? = nil
+        if let anError = error {
+            print("Sync Error : \(anError)")
+            alertController = UIAlertController(title: "Sync Error", message: "Error: \(anError)", preferredStyle: .alert)
+        }
+        alertController?.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        if let aController = alertController {
+            self.present(aController, animated: true)
+        }
+    }
+
+    //pragma mark - Loading
+    
+    func showLoading(_ loading: Bool) {
+        print("showLoading : \(loading)")
+        if loading {
+            let leftButton = UIBarButtonItem(title: "Syncing...", style: .plain, target: self, action: nil)
+            leftButton.isEnabled = false
+            self.navigationItem.setHidesBackButton(true, animated: true)
+            self.navigationItem.leftBarButtonItem = leftButton
+        } else {
+            self.navigationItem.leftBarButtonItems?.removeLast()
+            self.navigationItem.setHidesBackButton(false, animated: true)
+            
+            
+        }
+    }
 }
 
 

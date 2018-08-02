@@ -90,6 +90,20 @@ class QSSettingsTableViewController: UITableViewController {
                 }
             }
         }
+        
+        if indexPath.row == 2 {
+            let cell = tableView.cellForRow(at: indexPath)
+            cell?.textLabel?.text = "Syncing..."
+            cell?.textLabel?.textColor = .gray
+            cell?.setSelected(false, animated: true)
+            CoreDataStack.shared.synchronizer?.synchronize(completion: { (error) in
+                CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: { (error) in
+                    cell?.textLabel?.text = "Sync manually"
+                    cell?.textLabel?.textColor = .black
+                })
+            })
+            
+        }
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -101,13 +115,28 @@ class QSSettingsTableViewController: UITableViewController {
         }
         
         if indexPath.row == 1 {
-            cell = UITableViewCell(style: .default, reuseIdentifier: "syncCell")
+            cell = UITableViewCell(style: .default, reuseIdentifier: "autoSyncCell")
             if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
                 cell.textLabel?.text = "Auto Sync enabled (tap to toggle)"
             } else {
                 cell.textLabel?.text = "Auto Sync disabled (tap to toggle)"
             }
         }
+
+        if indexPath.row == 1 {
+            cell = UITableViewCell(style: .default, reuseIdentifier: "autoSyncCell")
+            if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+                cell.textLabel?.text = "Auto Sync enabled (tap to toggle)"
+            } else {
+                cell.textLabel?.text = "Auto Sync disabled (tap to toggle)"
+            }
+        }
+        
+        if indexPath.row == 2 {
+            cell = UITableViewCell(style: .default, reuseIdentifier: "syncCell")
+            cell.textLabel?.text = "Sync manually"
+        }
+        
         return cell
     }
     

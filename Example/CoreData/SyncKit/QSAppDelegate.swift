@@ -21,17 +21,13 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         CoreDataStack.shared.setupSharedSynchronizer()
         
         if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
-            checkPushNotification { (isEnable) in
-                if isEnable {
-                    
-                }
-                print("check notification finished")
-            }
+            CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
+            CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
         }
         
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last)
-        CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
-        CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
+        // path for debug
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last as Any)
+       
         
         // Override point for customization after application launch.
         let tabBarController = window?.rootViewController as? UITabBarController
@@ -90,7 +86,7 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didRegister notificationSettings: UIUserNotificationSettings) {
         print("NotificationSettings: \(notificationSettings)")
     }
-
+    
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
@@ -155,16 +151,16 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
                 switch setttings.authorizationStatus{
                 case .authorized:
                     // User has given authorization.
-                    print("enabled notification setting")
+                    print("User has given authorization")
                     isEnable?(true)
                 case .denied:
                     // User has denied authorization.
                     // You could tell them to change this in Settings
-                    print("setting has been disabled")
+                    print("User has denied authorization")
                     isEnable?(false)
                 case .notDetermined:
                     // Authorization request has not been made yet
-                    print("something vital went wrong here")
+                    print("Authorization request has not been made yet")
                     isEnable?(false)
                 }
             }
@@ -213,4 +209,5 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         }
         
     }
+
 }

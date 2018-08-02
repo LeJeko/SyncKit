@@ -14,9 +14,8 @@ import SyncKit
     #if os(iOS) || os(OSX)
     
     /**
-     *  Creates a new subscription with CloudKit so the application can receive notifications when new changes happen. The application is responsible for registering for remote notifications and initiating synchronization when a notification is received. @see `CKSubscription`
+     *  Creates a new subscription with CloudKit so the application can receive notifications when new changes happen. The application is responsible for registering for remote notifications and initiating synchronization when a notification is received. @see `CKDatabaseSubscription`
      *
-     *  -Paremeter zoneID   `CKRecordZoneID` to track for changes
      *  -Parameter completion Block that will be called after subscription is created, with an optional error.
      */
     

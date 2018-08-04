@@ -21,6 +21,15 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         CoreDataStack.shared.setupSynchronizer()
         CoreDataStack.shared.setupSharedSynchronizer()
         
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
+            CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
+        }
+        
+        // path for debug
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last as Any)
+       
+        
         // Override point for customization after application launch.
         let tabBarController = window?.rootViewController as? UITabBarController
         let navController = tabBarController?.viewControllers![0] as? UINavigationController
@@ -78,7 +87,7 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didRegister notificationSettings: UIUserNotificationSettings) {
         print("NotificationSettings: \(notificationSettings)")
     }
-
+    
     func applicationWillResignActive(_ application: UIApplication) {
         // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
         // Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.

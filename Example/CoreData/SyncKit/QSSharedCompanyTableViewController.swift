@@ -31,6 +31,16 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         self.tableView.reloadData()
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            syncButton.setTitle("Auto Sync", for: .disabled)
+            syncButton.isEnabled = false
+            syncButton.isHidden = false
+        } else {
+            syncButton.setTitle("Synchronize", for: .normal)
+            syncButton.isEnabled = true
+            syncButton.isHidden = false
+        }
+
     }
     
     override func didReceiveMemoryWarning() {
@@ -60,6 +70,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
             if let aContext = employeeTableViewController.company?.managedObjectContext {
                 employeeTableViewController.managedObjectContext = aContext
             }
+            employeeTableViewController.synchronizer = self.synchronizer
             let share: CKShare? = synchronizer?.share(for: company!)
             employeeTableViewController.canWrite = share?.currentUserParticipant?.permission == .readWrite
         }
@@ -90,7 +101,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
             tableView?.deleteRows(at: [indexPath!], with: .fade)
         case .update:
             if let aPath = indexPath {
-                configureCell(tableView?.cellForRow(at: aPath) as? QSCompanySwiftTableViewCell, at: indexPath)
+                configureCell(tableView?.cellForRow(at: aPath) as! QSCompanySwiftTableViewCell, at: indexPath!)
             }
         case .move:
             tableView?.deleteRows(at: [indexPath!], with: .fade)
@@ -132,23 +143,17 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? QSCompanySwiftTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as! QSCompanySwiftTableViewCell
         configureCell(cell, at: indexPath)
-        if let aCell = cell {
-            return aCell
-        }
-        return UITableViewCell()
+        return cell
     }
     
-    func configureCell(_ cell: QSCompanySwiftTableViewCell?, at indexPath: IndexPath?) {
-        var company: QSCompany? = nil
-        if let aPath = indexPath {
-            company = object(at: aPath)
-        }
-        cell?.nameLabel.text = company?.name
-        cell?.sharingButton.setTitle("Shared with me", for: .normal)
-        cell?.shareButtonAction = {
-            self.share(company!)
+    func configureCell(_ cell: QSCompanySwiftTableViewCell, at indexPath: IndexPath) {
+        let company = object(at: indexPath)
+        cell.nameLabel.text = company.name
+        cell.sharingButton.setTitle("Shared with me", for: .normal)
+        cell.shareButtonAction = {
+            self.share(company, button: cell.sharingButton)
         }
     }
     
@@ -169,12 +174,13 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     
     func synchronize(withCompletion completion: ((_ error: Error?) -> Void)? = nil) {
         self.showLoading(true)
-        synchronizer?.synchronize(completion: { error in
+        self.synchronizer?.synchronize(completion: { error in
             self.showLoading(false)
             if error != nil {
                 var alertController: UIAlertController? = nil
                 if let anError = error {
-                    alertController = UIAlertController(title: "Error", message: "Error: \(anError)", preferredStyle: .alert)
+                    print("Sync Error : \(anError)")
+                    alertController = UIAlertController(title: "Sync Error", message: "Error: \(anError)", preferredStyle: .alert)
                 }
                 alertController?.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
                 if let aController = alertController {
@@ -184,14 +190,14 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
             if (completion != nil) {
                 completion!(error)
             }
+            
         })
     }
     
-    func share(_ company: QSCompany) {
+    func share(_ company: QSCompany, button: UIButton) {
         sharingCompany = company
-        showLoading(true)
-        synchronizer?.synchronize(completion: { error in
-            self.showLoading(false)
+        print(company, button)
+        synchronize(withCompletion: { error in
             if error == nil {
                 var sharingController: UICloudSharingController?
                 let share: CKShare? = self.synchronizer?.share(for: company)
@@ -199,6 +205,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                 if share != nil {
                     if let aShare = share {
                         sharingController = UICloudSharingController(share: aShare, container: container)
+                        sharingController?.availablePermissions = [.allowPrivate, .allowReadOnly, .allowReadWrite]
                     }
                 } else {
                     sharingController = UICloudSharingController(preparationHandler: { controller, preparationCompletionHandler in
@@ -206,9 +213,11 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                             preparationCompletionHandler(share, container, error)
                         }
                     })
+                    sharingController?.availablePermissions = [.allowPrivate, .allowReadOnly]
                 }
-                sharingController?.availablePermissions = [.allowPublic, .allowReadOnly, .allowReadWrite]
                 sharingController?.delegate = self
+                sharingController?.popoverPresentationController?.sourceView = button as UIView
+                sharingController?.popoverPresentationController?.permittedArrowDirections = [.right]
                 if let aController = sharingController {
                     self.present(aController, animated: true)
                 }

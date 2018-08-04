@@ -32,6 +32,15 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
         self.tableView.reloadData()
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            syncButton.setTitle("Auto Sync", for: .disabled)
+            syncButton.isEnabled = false
+            syncButton.isHidden = false
+        } else {
+            syncButton.setTitle("Synchronize", for: .normal)
+            syncButton.isEnabled = true
+            syncButton.isHidden = false
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -46,7 +55,6 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
             fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: managedObjectContext!, sectionNameKeyPath: nil, cacheName: nil)
             fetchedResultsController?.delegate = self
             try? fetchedResultsController?.performFetch()
-            let array = try? managedObjectContext?.fetch(fetchRequest)
         }
     }
 
@@ -74,6 +82,7 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
             let company = sender as? QSCompany
             employeeTableViewController.company = company
             employeeTableViewController.managedObjectContext = self.managedObjectContext
+            employeeTableViewController.synchronizer = self.synchronizer
             employeeTableViewController.canWrite = true
         }
     }
@@ -168,7 +177,7 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
         }
         
         cell.shareButtonAction = {
-            self.shareCompany(company)
+            self.shareCompany(company, button: cell.sharingButton)
         }
 
     }
@@ -185,6 +194,7 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
                 managedObjectContext?.delete(aCompany)
             }
             try? managedObjectContext?.save()
+           autoSync()
         }
     }
 
@@ -214,28 +224,7 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
         self.synchronizer?.synchronize(completion: { error in
             self.showLoading(false)
             if error != nil {
-                var alertController: UIAlertController? = nil
-                if let anError = error {
-                    print("Sync Error : \(anError)")
-                    alertController = UIAlertController(title: "Sync Error", message: "Error: \(anError)", preferredStyle: .alert)
-                }
-                alertController?.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
-                if let aController = alertController {
-                    self.present(aController, animated: true)
-                }
-            } else {
-                let zoneID: CKRecordZoneID? = self.synchronizer?.modelAdapters().first?.recordZoneID()
-                if zoneID != nil {
-                    self.synchronizer?.subscribeForChanges(in: zoneID!) { error in
-                        if error != nil {
-                            if let anError = error {
-                                print("Failed to subscribe with error: \(anError)")
-                            }
-                        } else {
-                            print("Subscribed for notifications")
-                        }
-                    }
-                }
+                self.alertError(error: error)
             }
             if (completion != nil) {
                 completion!(error)
@@ -245,7 +234,7 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
     }
     
 
-    func shareCompany(_ company: QSCompany) {
+    func shareCompany(_ company: QSCompany, button: UIButton) {
         sharingCompany = company
         synchronize(withCompletion: { error in
             if error == nil {
@@ -255,6 +244,7 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
                 if share != nil {
                     if let aShare = share {
                         sharingController = UICloudSharingController(share: aShare, container: container)
+                        sharingController?.availablePermissions = [.allowPrivate, .allowReadOnly, .allowReadWrite]
                     }
                 } else {
                     sharingController = UICloudSharingController(preparationHandler: { controller, preparationCompletionHandler in
@@ -265,9 +255,11 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
                             preparationCompletionHandler(share, container, error)
                         }
                     })
+                    sharingController?.availablePermissions = [.allowPrivate, .allowReadOnly]
                 }
-                sharingController?.availablePermissions = [.allowPublic, .allowReadOnly, .allowReadWrite]
                 sharingController?.delegate = self
+                sharingController?.popoverPresentationController?.sourceView = button as UIView
+                sharingController?.popoverPresentationController?.permittedArrowDirections = [.right]
                 if let aController = sharingController {
                     self.present(aController, animated: true)
                 }

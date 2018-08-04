@@ -69,7 +69,7 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
         } catch {
             print(error)
         }
-
+       autoSync()
      }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -304,4 +304,32 @@ class QSCompanyTableViewController: UITableViewController, NSFetchedResultsContr
         }
     }
     
+    // MARK: - AutoSync
+    
+    func autoSync() {
+        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            self.showLoading(true)
+            self.synchronizer?.synchronize(completion: { (error) in
+                self.showLoading(false)
+                if error != nil {
+                    self.alertError(error: error)
+                }
+            })
+            
+        }
+    }
+    
+    // MARK: - Error Alert
+    
+    func alertError(error: Error?) {
+        var alertController: UIAlertController? = nil
+        if let anError = error {
+            print("Sync Error : \(anError)")
+            alertController = UIAlertController(title: "Sync Error", message: "Error: \(anError)", preferredStyle: .alert)
+        }
+        alertController?.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+        if let aController = alertController {
+            self.present(aController, animated: true)
+        }
+    }
 }

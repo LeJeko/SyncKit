@@ -24,6 +24,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        synchronizer = CoreDataStack.shared.sharedSynchronizer
         self.setupFetchedResultsController()
     
     }
@@ -186,7 +187,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                 if let aController = alertController {
                     self.present(aController, animated: true)
                 }
-            }
+            } 
             if (completion != nil) {
                 completion!(error)
             }

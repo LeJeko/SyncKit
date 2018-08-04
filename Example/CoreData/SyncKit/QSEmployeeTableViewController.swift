@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import SyncKit
 
 class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsControllerDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     var managedObjectContext: NSManagedObjectContext?
@@ -272,6 +273,22 @@ class QSEmployeeTableViewController: UITableViewController, NSFetchedResultsCont
         }
     }
 
+    //pragma mark - Loading
+    
+    func showLoading(_ loading: Bool) {
+        print("showLoading : \(loading)")
+        if loading {
+            let leftButton = UIBarButtonItem(title: "Syncing...", style: .plain, target: self, action: nil)
+            leftButton.isEnabled = false
+            self.navigationItem.setHidesBackButton(true, animated: true)
+            self.navigationItem.leftBarButtonItem = leftButton
+        } else {
+            self.navigationItem.leftBarButtonItems?.removeLast()
+            self.navigationItem.setHidesBackButton(false, animated: true)
+            
+            
+        }
+    }
 }
 
 

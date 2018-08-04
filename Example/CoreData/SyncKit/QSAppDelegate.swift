@@ -119,8 +119,14 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         } else if application.applicationState == .active {
             print("Application is active")
         }
-        CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
-        CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
+        let aps = userInfo["aps"] as! [String: AnyObject]
+        if aps["content-available"] as? Int == 1 {
+            print("Silent notification received")
+            if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+            CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
+            CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
+            }
+        }
     }
 
     
@@ -150,16 +156,16 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
                 switch setttings.authorizationStatus{
                 case .authorized:
                     // User has given authorization.
-                    print("enabled notification setting")
+                    print("User has given authorization")
                     isEnable?(true)
                 case .denied:
                     // User has denied authorization.
                     // You could tell them to change this in Settings
-                    print("setting has been disabled")
+                    print("User has denied authorization")
                     isEnable?(false)
                 case .notDetermined:
                     // Authorization request has not been made yet
-                    print("something vital went wrong here")
+                    print("Authorization request has not been made yet")
                     isEnable?(false)
                 }
             }

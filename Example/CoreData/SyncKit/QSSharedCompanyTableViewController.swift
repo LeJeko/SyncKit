@@ -102,7 +102,7 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
             tableView?.deleteRows(at: [indexPath!], with: .fade)
         case .update:
             if let aPath = indexPath {
-                configureCell(tableView?.cellForRow(at: aPath) as? QSCompanySwiftTableViewCell, at: indexPath)
+                configureCell(tableView?.cellForRow(at: aPath) as! QSCompanySwiftTableViewCell, at: indexPath!)
             }
         case .move:
             tableView?.deleteRows(at: [indexPath!], with: .fade)
@@ -144,23 +144,17 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as? QSCompanySwiftTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as! QSCompanySwiftTableViewCell
         configureCell(cell, at: indexPath)
-        if let aCell = cell {
-            return aCell
-        }
-        return UITableViewCell()
+        return cell
     }
     
-    func configureCell(_ cell: QSCompanySwiftTableViewCell?, at indexPath: IndexPath?) {
-        var company: QSCompany? = nil
-        if let aPath = indexPath {
-            company = object(at: aPath)
-        }
-        cell?.nameLabel.text = company?.name
-        cell?.sharingButton.setTitle("Shared with me", for: .normal)
-        cell?.shareButtonAction = {
-            self.share(company!)
+    func configureCell(_ cell: QSCompanySwiftTableViewCell, at indexPath: IndexPath) {
+        let company = object(at: indexPath)
+        cell.nameLabel.text = company.name
+        cell.sharingButton.setTitle("Shared with me", for: .normal)
+        cell.shareButtonAction = {
+            self.share(company, button: cell.sharingButton)
         }
     }
     
@@ -201,11 +195,10 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
         })
     }
     
-    func share(_ company: QSCompany) {
+    func share(_ company: QSCompany, button: UIButton) {
         sharingCompany = company
-        showLoading(true)
-        synchronizer?.synchronize(completion: { error in
-            self.showLoading(false)
+        print(company, button)
+        synchronize(withCompletion: { error in
             if error == nil {
                 var sharingController: UICloudSharingController?
                 let share: CKShare? = self.synchronizer?.share(for: company)
@@ -224,6 +217,8 @@ class QSSharedCompanyTableViewController: UITableViewController, QSCoreDataMulti
                     sharingController?.availablePermissions = [.allowPrivate, .allowReadOnly]
                 }
                 sharingController?.delegate = self
+                sharingController?.popoverPresentationController?.sourceView = button as UIView
+                sharingController?.popoverPresentationController?.permittedArrowDirections = [.right]
                 if let aController = sharingController {
                     self.present(aController, animated: true)
                 }

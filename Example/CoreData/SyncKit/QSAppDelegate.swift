@@ -56,6 +56,7 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
                 DispatchQueue.main.async {
                     if granted {
                         UIApplication.shared.registerForRemoteNotifications()
+                        
                     }
                     else {
                         //Do stuff if unsuccessful...
@@ -118,9 +119,13 @@ class QSAppDelegate: UIResponder, UIApplicationDelegate {
         } else if application.applicationState == .active {
             print("Application is active")
         }
-        if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
+        let aps = userInfo["aps"] as! [String: AnyObject]
+        if aps["content-available"] as? Int == 1 {
+            print("Silent notification received")
+            if UserDefaults.standard.bool(forKey: "autoSyncEnabled") {
             CoreDataStack.shared.synchronizer?.synchronize(completion: nil)
             CoreDataStack.shared.sharedSynchronizer?.synchronize(completion: nil)
+            }
         }
     }
 
